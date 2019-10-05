@@ -22,6 +22,7 @@ type Props = {
   url: string;
   children: React.ReactNode;
   formComponent: React.ComponentType<SignInForm>;
+  onSessionTimeout: Function;
 };
 
 const PENDING = 'pending';
@@ -37,6 +38,18 @@ export const Accountable = ({ children, url, formComponent }: Props) => {
   const [passwordState, setPassword] = React.useState('');
   const FormComponent = formComponent;
 
+  const scheduleRefresh = React.useCallback(() => {
+    setTimeout(() => {
+      fetch(`${url}/refresh`, {
+        ...fetchOptions,
+      }).then(response => {
+        if (response.status === 200) {
+          scheduleRefresh();
+        }
+      });
+    }, 600000);
+  }, [url]);
+
   React.useEffect(() => {
     fetch(`${url}/refresh`, {
       ...fetchOptions,
@@ -46,12 +59,13 @@ export const Accountable = ({ children, url, formComponent }: Props) => {
           const foo = setRespState(data);
           console.log(foo);
           setAuthState(AUTHENTICATED);
+          scheduleRefresh();
         });
       } else {
         setAuthState(NOT_AUTHENTICATED);
       }
     });
-  }, []);
+  }, [scheduleRefresh, url]);
 
   const handleSubmit = (event: React.SyntheticEvent) => {
     event.preventDefault();
