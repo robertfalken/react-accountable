@@ -31,6 +31,7 @@ const AUTHENTICATION_FAILED = 'authentication-failed';
 const NOT_AUTHENTICATED = 'not-authenticated';
 
 export const Accountable = ({ children, url, formComponent }: Props) => {
+  const [respState, setRespState] = React.useState({});
   const [authState, setAuthState] = React.useState(PENDING);
   const [emailState, setEmail] = React.useState('');
   const [passwordState, setPassword] = React.useState('');
@@ -41,7 +42,11 @@ export const Accountable = ({ children, url, formComponent }: Props) => {
       ...fetchOptions,
     }).then(response => {
       if (response.status === 200) {
-        setAuthState(AUTHENTICATED);
+        response.json().then(data => {
+          const foo = setRespState(data);
+          console.log(foo);
+          setAuthState(AUTHENTICATED);
+        });
       } else {
         setAuthState(NOT_AUTHENTICATED);
       }
@@ -98,7 +103,7 @@ export const Accountable = ({ children, url, formComponent }: Props) => {
   if (authState === PENDING) return null;
 
   return (
-    <Context.Provider value={{ signOut }}>
+    <Context.Provider value={{ signOut, ...respState }}>
       {authState === AUTHENTICATED ? (
         children
       ) : (
